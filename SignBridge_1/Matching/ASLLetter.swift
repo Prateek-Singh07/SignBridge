@@ -44,6 +44,12 @@ enum ASLLetter: String, CaseIterable, Identifiable {
         rawValue.lowercased()
     }
 
+    /// Official ISL alphabet reference asset name
+    var referenceImageName: String {
+        "isl_letter_" + lowercased()
+    }
+
+
     /// Practice instruction for each letter handshape.
     var instruction: String {
         switch self {

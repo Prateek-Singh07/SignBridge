@@ -259,7 +259,7 @@ struct DailyChallengePopupView: View {
 
     private var activeLetterCard: some View {
         let isDone = challengeManager.isLetterCompleted(activeLetter)
-        let imageName = "asl_letter_" + activeLetter.lowercased()
+        let imageName = activeLetter.referenceImageName
 
         return VStack(spacing: 12) {
             // Card Header

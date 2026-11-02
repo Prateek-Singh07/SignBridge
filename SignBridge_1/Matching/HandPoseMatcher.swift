@@ -20,7 +20,44 @@ struct HandPoseMatcher {
     static let thumbExtendedRatio: CGFloat = 0.60
     static let thumbFoldedRatio: CGFloat = 0.70
 
-    // MARK: - Evaluation
+    // MARK: - Multi-Hand Evaluation
+
+    /// Evaluates a multi-hand pose against a target letter.
+    /// Handles zero, one, or two hands cleanly.
+    /// For one-hand signs (ASL alphabet), evaluates all detected hands and returns a match if any hand forms the letter.
+    static func evaluate(
+        multiHandPose: MultiHandPose,
+        for letter: ASLLetter,
+        motionTracker: HandMotionTracker? = nil
+    ) -> PoseMatchResult {
+        guard !multiHandPose.isEmpty else {
+            return .noHand
+        }
+
+        // Single hand present
+        if multiHandPose.hands.count == 1, let singleHand = multiHandPose.hands.first {
+            return evaluate(landmarks: singleHand.landmarks, for: letter, motionTracker: motionTracker)
+        }
+
+        // Two (or more) hands present:
+        // For one-hand signs (ASL alphabet), evaluate all detected hands.
+        // If any hand successfully forms the letter, return match.
+        var bestResult: PoseMatchResult? = nil
+        for hand in multiHandPose.hands {
+            let result = evaluate(landmarks: hand.landmarks, for: letter, motionTracker: motionTracker)
+            if result.isMatched {
+                return result
+            }
+            if bestResult == nil || (bestResult?.hint == nil && result.hint != nil) {
+                bestResult = result
+            }
+        }
+
+        return bestResult ?? .adjust(hint: nil)
+    }
+
+    // MARK: - Single-Hand Evaluation
+
 
     /// Evaluates hand landmarks against a target letter.
     /// - Parameters:

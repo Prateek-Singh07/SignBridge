@@ -42,6 +42,14 @@ final class HandMotionTracker {
         indexTipHistory.removeAll { now - $0.timestamp > maxHistoryDuration }
     }
 
+    /// Updates motion tracking from a multi-hand pose using the primary hand.
+    func update(multiHandPose: MultiHandPose) {
+        if let primary = multiHandPose.primaryHand {
+            update(landmarks: primary.landmarks)
+        }
+    }
+
+
     func reset() {
         littleTipHistory.removeAll()
         indexTipHistory.removeAll()

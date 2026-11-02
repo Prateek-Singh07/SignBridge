@@ -9,11 +9,33 @@ import SwiftUI
 
 /// Draws hand joints and bones from normalized Vision landmarks, aligned with preview layer coordinates.
 struct HandSkeletonView: View {
-    let landmarks: [String: HandLandmark]
+    let hands: [DetectedHand]
     let videoDimensions: CGSize
 
-    // Primary skeleton blue color
+    // Skeleton blue color applied uniformly to both hands
     private let skeletonColor = Color(red: 0.15, green: 0.55, blue: 0.95)
+
+    init(hands: [DetectedHand], videoDimensions: CGSize) {
+        self.hands = hands
+        self.videoDimensions = videoDimensions
+    }
+
+    init(landmarks: [String: HandLandmark], videoDimensions: CGSize) {
+        if landmarks.isEmpty {
+            self.hands = []
+        } else {
+            self.hands = [
+                DetectedHand(
+                    id: 1,
+                    chirality: .unknown,
+                    landmarks: landmarks,
+                    wristLocation: landmarks["wrist"]?.point,
+                    confidence: 1.0
+                )
+            ]
+        }
+        self.videoDimensions = videoDimensions
+    }
 
     // Pairs of joint keys forming bones
     private let bones: [(String, String)] = [
@@ -53,38 +75,43 @@ struct HandSkeletonView: View {
             let viewSize = geometry.size
 
             Canvas { context, _ in
-                // 1. Draw bones first (blue connecting lines between joints)
-                for (jointAKey, jointBKey) in bones {
-                    guard let landmarkA = landmarks[jointAKey],
-                          let landmarkB = landmarks[jointBKey] else {
-                        continue
+                for hand in hands {
+                    let handLandmarks = hand.landmarks
+                    guard !handLandmarks.isEmpty else { continue }
+
+                    // 1. Draw bones first (blue connecting lines between joints)
+                    for (jointAKey, jointBKey) in bones {
+                        guard let landmarkA = handLandmarks[jointAKey],
+                              let landmarkB = handLandmarks[jointBKey] else {
+                            continue
+                        }
+
+                        let pointA = convertPoint(landmarkA.point, viewSize: viewSize)
+                        let pointB = convertPoint(landmarkB.point, viewSize: viewSize)
+
+                        var path = Path()
+                        path.move(to: pointA)
+                        path.addLine(to: pointB)
+
+                        context.stroke(
+                            path,
+                            with: .color(skeletonColor.opacity(0.85)),
+                            style: StrokeStyle(lineWidth: 3.5, lineCap: .round, lineJoin: .round)
+                        )
                     }
 
-                    let pointA = convertPoint(landmarkA.point, viewSize: viewSize)
-                    let pointB = convertPoint(landmarkB.point, viewSize: viewSize)
-
-                    var path = Path()
-                    path.move(to: pointA)
-                    path.addLine(to: pointB)
-
-                    context.stroke(
-                        path,
-                        with: .color(skeletonColor.opacity(0.85)),
-                        style: StrokeStyle(lineWidth: 3.5, lineCap: .round, lineJoin: .round)
-                    )
-                }
-
-                // 2. Draw joints (white fill with blue outline)
-                for (_, landmark) in landmarks {
-                    let point = convertPoint(landmark.point, viewSize: viewSize)
-                    let rect = CGRect(
-                        x: point.x - 4.5,
-                        y: point.y - 4.5,
-                        width: 9.0,
-                        height: 9.0
-                    )
-                    context.fill(Path(ellipseIn: rect), with: .color(Color.white))
-                    context.stroke(Path(ellipseIn: rect), with: .color(skeletonColor), lineWidth: 1.5)
+                    // 2. Draw joints (white fill with blue outline)
+                    for (_, landmark) in handLandmarks {
+                        let point = convertPoint(landmark.point, viewSize: viewSize)
+                        let rect = CGRect(
+                            x: point.x - 4.5,
+                            y: point.y - 4.5,
+                            width: 9.0,
+                            height: 9.0
+                        )
+                        context.fill(Path(ellipseIn: rect), with: .color(Color.white))
+                        context.stroke(Path(ellipseIn: rect), with: .color(skeletonColor), lineWidth: 1.5)
+                    }
                 }
             }
         }

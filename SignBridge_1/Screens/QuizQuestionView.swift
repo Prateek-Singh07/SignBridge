@@ -204,7 +204,7 @@ struct QuizQuestionView: View {
                     .accessibilityHidden(true)
 
                 HandSkeletonView(
-                    landmarks: poseProcessor.landmarks,
+                    hands: poseProcessor.detectedHands,
                     videoDimensions: poseProcessor.videoDimensions
                 )
             }
@@ -448,7 +448,7 @@ struct QuizQuestionView: View {
                                 .foregroundStyle(.primary)
                         }
 
-                        let imageName = "asl_letter_" + targetLetter.lowercased()
+                        let imageName = targetLetter.referenceImageName
                         if UIImage(named: imageName) != nil {
                             HStack {
                                 Spacer()
@@ -592,8 +592,7 @@ struct QuizQuestionView: View {
         // Prevent duplicate evaluations if already scored
         if case .evaluated = evaluationState { return }
 
-        let landmarks = poseProcessor.landmarks
-        guard !landmarks.isEmpty else {
+        guard !poseProcessor.detectedHands.isEmpty else {
             evaluationState = .noHandDetected
             return
         }
@@ -603,7 +602,7 @@ struct QuizQuestionView: View {
         // Special graceful handling for dynamic letters (J and Z)
         if target == .j || target == .z {
             let eval = HandPoseMatcher.evaluate(
-                landmarks: landmarks,
+                multiHandPose: poseProcessor.multiHandPose,
                 for: target,
                 motionTracker: poseProcessor.motionTracker
             )
@@ -617,7 +616,7 @@ struct QuizQuestionView: View {
 
         // Standard evaluation against target letter
         let targetMatch = HandPoseMatcher.evaluate(
-            landmarks: landmarks,
+            multiHandPose: poseProcessor.multiHandPose,
             for: target,
             motionTracker: poseProcessor.motionTracker
         )
@@ -640,7 +639,7 @@ struct QuizQuestionView: View {
             var recognizedOther: ASLLetter? = nil
             for candidate in ASLLetter.allCases where candidate != target {
                 let candidateResult = HandPoseMatcher.evaluate(
-                    landmarks: landmarks,
+                    multiHandPose: poseProcessor.multiHandPose,
                     for: candidate,
                     motionTracker: nil
                 )

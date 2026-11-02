@@ -257,13 +257,19 @@ struct LetterPracticeView: View {
                     HStack {
                         // Feature 1: Status chip: "Hand Detected" / "No Hand Detected" (icon + text)
                         HStack(spacing: 6) {
-                            Image(systemName: poseProcessor.landmarks.isEmpty ? "hand.wave" : "hand.raised.fill")
-                                .font(.caption)
-                                .foregroundStyle(poseProcessor.landmarks.isEmpty ? Theme.secondaryText : Theme.sage)
+                            let count = poseProcessor.detectedHands.count
+                            let iconName = count >= 2 ? "hands.sparkles.fill" : (count == 1 ? "hand.raised.fill" : "hand.wave")
+                            let statusText = count >= 2 ? "2 Hands Detected" : (count == 1 ? "Hand Detected" : "No Hand Detected")
+                            let statusColor = count > 0 ? Theme.sage : Theme.secondaryText
+                            let textColor = count > 0 ? Theme.primaryText : Theme.secondaryText
 
-                            Text(poseProcessor.landmarks.isEmpty ? "No Hand Detected" : "Hand Detected")
+                            Image(systemName: iconName)
+                                .font(.caption)
+                                .foregroundStyle(statusColor)
+
+                            Text(statusText)
                                 .font(.system(size: 13, weight: .bold, design: .rounded))
-                                .foregroundStyle(poseProcessor.landmarks.isEmpty ? Theme.secondaryText : Theme.primaryText)
+                                .foregroundStyle(textColor)
                         }
                         .padding(.horizontal, 12)
                         .padding(.vertical, 6)
@@ -272,7 +278,7 @@ struct LetterPracticeView: View {
                         .overlay(Capsule().strokeBorder(Theme.border, lineWidth: 1))
                         .shadow(color: Theme.shadowColor, radius: 8, x: 0, y: 3)
                         .accessibilityElement(children: .combine)
-                        .accessibilityLabel(poseProcessor.landmarks.isEmpty ? "Status: No Hand Detected" : "Status: Hand Detected")
+                        .accessibilityLabel(poseProcessor.detectedHands.count >= 2 ? "Status: 2 Hands Detected" : (poseProcessor.detectedHands.isEmpty ? "Status: No Hand Detected" : "Status: Hand Detected"))
 
                         Spacer()
                     }
@@ -283,7 +289,7 @@ struct LetterPracticeView: View {
                             .accessibilityHidden(true)
 
                         HandSkeletonView(
-                            landmarks: poseProcessor.landmarks,
+                            hands: poseProcessor.detectedHands,
                             videoDimensions: poseProcessor.videoDimensions
                         )
                     }
@@ -819,7 +825,7 @@ struct LetterPracticeView: View {
 
     @ViewBuilder
     private var referenceImageView: some View {
-        let imageName = "asl_letter_" + currentLetter.lowercased()
+        let imageName = currentLetter.referenceImageName
         if UIImage(named: imageName) != nil {
             HStack {
                 Spacer()
@@ -908,7 +914,7 @@ struct LetterPracticeView: View {
         // If target is not matched, check if a different valid letter is formed
         var detectedOther: ASLLetter? = nil
         for candidate in ASLLetter.allCases where candidate != currentLetter {
-            let eval = HandPoseMatcher.evaluate(landmarks: landmarks, for: candidate, motionTracker: nil)
+            let eval = HandPoseMatcher.evaluate(multiHandPose: poseProcessor.multiHandPose, for: candidate, motionTracker: nil)
             if eval.isMatched {
                 detectedOther = candidate
                 break
@@ -1345,7 +1351,7 @@ struct SimilarLetterComparisonPopupView: View {
             }
 
             // Image Container
-            let imageName = "asl_letter_" + letter.lowercased()
+            let imageName = letter.referenceImageName
             if UIImage(named: imageName) != nil {
                 Image(imageName)
                     .resizable()

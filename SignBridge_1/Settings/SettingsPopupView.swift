@@ -322,6 +322,10 @@ struct SettingsPopupView: View {
                         Text("Vision-based real-time 26-letter recognition.")
                             .font(.caption2)
                             .foregroundStyle(.secondary)
+                        Text("Official ISL alphabet references courtesy of ISLRTC, Govt. of India.")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                            .multilineTextAlignment(.center)
                     }
                     .padding(.top, 4)
                 }

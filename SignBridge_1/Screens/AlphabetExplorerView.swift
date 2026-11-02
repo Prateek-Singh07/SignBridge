@@ -268,7 +268,7 @@ struct AlphabetExplorerPopupView: View {
     private func letterGridCard(for letter: ASLLetter) -> some View {
         let status = masteryManager.status(for: letter)
         let isCurrent = (letter == currentLetter)
-        let imageName = "asl_letter_" + letter.lowercased()
+        let imageName = letter.referenceImageName
 
         return Button {
             FeedbackService.shared.playTap()

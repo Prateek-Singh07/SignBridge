@@ -308,6 +308,10 @@ struct SettingsView: View {
                         .font(.caption2)
                         .foregroundStyle(.tertiary)
                         .multilineTextAlignment(.center)
+                    Text("Official ISL alphabet references courtesy of ISLRTC (Indian Sign Language Research and Training Centre), Department of Empowerment of Persons with Disabilities, Govt. of India.")
+                        .font(.caption2)
+                        .foregroundStyle(.tertiary)
+                        .multilineTextAlignment(.center)
                 }
                 .padding(.top, 8)
                 .padding(.bottom, 24)
